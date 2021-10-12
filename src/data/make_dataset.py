@@ -1,30 +1,70 @@
-# -*- coding: utf-8 -*-
-import click
-import logging
-from pathlib import Path
-from dotenv import find_dotenv, load_dotenv
+from pyspark.sql import SparkSession
+from pyspark.sql.window import Window
+from pyspark.sql import functions as F
 
 
-@click.command()
-@click.argument('input_filepath', type=click.Path(exists=True))
-@click.argument('output_filepath', type=click.Path())
-def main(input_filepath, output_filepath):
-    """ Runs data processing scripts to turn raw data from (../raw) into
-        cleaned data ready to be analyzed (saved in ../processed).
+def calculate_window(df):
+    """[summary]
+
+    Args:
+        df ([type]): [description]
+
+    Returns:
+        [type]: [description]
     """
-    logger = logging.getLogger(__name__)
-    logger.info('making final data set from raw data')
+    w_all = (Window.partitionBy('UserName').orderBy(
+        F.col("Time").cast('long')).rangeBetween(-3600, Window.currentRow))
+    df = df.withColumn('total_events', F.count("Time").over(w_all))
+
+    w_per_event = (Window.partitionBy('UserName', 'EventID').orderBy(
+        F.col("Time").cast('long')).rangeBetween(-3600, Window.currentRow))
+    df = df.withColumn('total_per_event', F.count("Time").over(w_per_event))
+
+    new_columns = ['time', 'username', 'event_id',
+                   'total_events', 'total_per_event']
+    df = df.toDF(*new_columns)
+
+    return df.select(*new_columns).distinct().orderBy("Time")
 
 
-if __name__ == '__main__':
-    log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    logging.basicConfig(level=logging.INFO, format=log_fmt)
+def process_benign():
+    path = "../../data/raw/wls_day-01"
+    df = spark.read.json(path)
+    return df.select("Time", "UserName", "EventID")
 
-    # not used in this stub but often useful for finding various files
-    project_dir = Path(__file__).resolve().parents[2]
 
-    # find .env automagically by walking up directories until it's found, then
-    # load up the .env entries as environment variables
-    load_dotenv(find_dotenv())
+def process_malicious(path):
+    """This functions reads and selects required columns from the 
+    path for malicious datasets
 
+    Args:
+        path (string): The path of the json dataset
+    """
+    pass
+
+
+def concatenate(benign_df, malicious_dfs):
+    """This function concatenates malicious datasets to the benign
+    dataset.
+
+    Args:
+        benign_df (dataframe): [description]
+        malicious_dfs (list(dataframe)): [description]
+    """
+    pass
+
+
+def main():
+    benign_df = process_benign()
+    benign_df = calculate_window(benign_df)
+    benign_df.coalesce(1).write.csv("../../data/processed/benign_1.csv")
+
+
+if __name__ == "__main__":
+    spark = SparkSession.builder \
+        .master('local[*]') \
+        .config("spark.driver.memory", "8g") \
+        .appName('vb-app') \
+        .getOrCreate()
+    spark.sparkContext.setLogLevel('WARN')
     main()
