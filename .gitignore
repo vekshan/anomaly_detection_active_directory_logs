@@ -94,3 +94,5 @@ notebooks/lanl.csv
 notebooks/purple.csv
 *.csv
 notebooks/apt.csv
+*.csv
+notebooks/purple.csv
