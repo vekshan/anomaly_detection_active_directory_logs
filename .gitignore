@@ -87,12 +87,3 @@ target/
 
 # Mypy cache
 .mypy_cache/
-notebooks/apt.csv
-notebooks/concatenated.csv
-notebooks/apt.csv
-notebooks/lanl.csv
-notebooks/purple.csv
-*.csv
-notebooks/apt.csv
-*.csv
-notebooks/purple.csv
