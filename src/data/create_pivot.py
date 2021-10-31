@@ -39,7 +39,7 @@ def main():
     pivot_df = process_benign()
     pivot_df = process_pivot(pivot_df)
     pivot_df = process_standardize(pivot_df)
-    pivot_df.coalesce(1).write.csv("../../data/processed/pivot_with_standardize.csv")
+    pivot_df.coalesce(1).write.option("header",True).csv("../../data/processed/pivot_with_standardize.csv")
     
 if __name__ == "__main__":
     spark = SparkSession.builder \
