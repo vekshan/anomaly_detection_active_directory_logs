@@ -1,5 +1,3 @@
-import findspark
-findspark.init()
 from pyspark.sql import SparkSession
 from pyspark.sql.types import *
 from pyspark.ml import Pipeline
@@ -21,12 +19,12 @@ def process_benign():
     df = df.filter(df.event_id.isin(keep_event_ids))
     return df
 
-def process_pivot(df):
+def pivot(df):
     df = df.groupBy("time", "username", "total_events").pivot("event_id").sum("total_per_event")
     df = df.na.fill(value=0, subset=["4624", "4625", "4648", "4672", "4768"])
     return df
 
-def process_standardize(df):
+def standardize(df):
     unlist = udf(lambda x: round(float(list(x)[0]),3), DoubleType())
     for i in ["total_events", "4624", "4625", "4648", "4672", "4768"]:
         assembler = VectorAssembler(inputCols=[i], outputCol=i+"_Vect")
@@ -37,8 +35,8 @@ def process_standardize(df):
     
 def main():
     pivot_df = process_benign()
-    pivot_df = process_pivot(pivot_df)
-    pivot_df = process_standardize(pivot_df)
+    pivot_df = pivot(pivot_df)
+    pivot_df = standardize(pivot_df)
     pivot_df.coalesce(1).write.option("header",True).csv("../../data/processed/pivot_with_standardize.csv")
     
 if __name__ == "__main__":
