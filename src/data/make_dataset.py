@@ -12,35 +12,43 @@ def calculate_window(df):
     Returns:
         [type]: [description]
     """
-    w_all = (Window.partitionBy('UserName').orderBy(
-        F.col("Time").cast('long')).rangeBetween(-3600, Window.currentRow))
-    df = df.withColumn('total_events', F.count("Time").over(w_all))
+    w_all = (Window.partitionBy('host').orderBy(
+        F.col("time").cast('long')).rangeBetween(-3600, Window.currentRow))
+    df = df.withColumn('total_events', F.count("time").over(w_all))
 
-    w_per_event = (Window.partitionBy('UserName', 'EventID').orderBy(
-        F.col("Time").cast('long')).rangeBetween(-3600, Window.currentRow))
-    df = df.withColumn('total_per_event', F.count("Time").over(w_per_event))
+    w_per_event = (Window.partitionBy('host', 'event_id').orderBy(
+        F.col("time").cast('long')).rangeBetween(-3600, Window.currentRow))
+    df = df.withColumn('total_per_event', F.count("time").over(w_per_event))
 
-    new_columns = ['time', 'username', 'event_id',
-                   'total_events', 'total_per_event']
-    df = df.toDF(*new_columns)
-
-    return df.select(*new_columns).distinct().orderBy("Time")
+    return df.distinct().orderBy("time", "host")
 
 
 def process_benign():
+    """[summary]
+
+    Returns:
+        [type]: [description]
+    """
     path = "../../data/raw/wls_day-01"
     df = spark.read.json(path)
-    return df.select("Time", "UserName", "EventID")
+    df = df.select("Time", "UserName", "EventID")
+    new_columns = ['time', 'host', 'event_id']
+    return df.toDF(*new_columns)
 
 
 def process_malicious(path):
-    """This functions reads and selects required columns from the 
+    """This functions reads and selects required columns from the
     path for malicious datasets
 
     Args:
         path (string): The path of the json dataset
     """
-    pass
+    path = "../data/raw/evtx_data.csv"
+    df = spark.read.options(header='true', inferSchema='true') \
+        .csv(path)
+    df = df.select("SystemTime", "Computer", "EventID")
+    new_columns = ['time', 'host', 'event_id']
+    return df.toDF(*new_columns)
 
 
 def concatenate(benign_df, malicious_dfs):
@@ -61,10 +69,10 @@ def main():
 
 
 if __name__ == "__main__":
-    spark = SparkSession.builder \
-        .master('local[*]') \
-        .config("spark.driver.memory", "8g") \
-        .appName('vb-app') \
-        .getOrCreate()
+    spark = SparkSession.builder
+    .master('local[*]')
+    .config("spark.driver.memory", "8g")
+    .appName('vb-app')
+    .getOrCreate()
     spark.sparkContext.setLogLevel('WARN')
     main()
