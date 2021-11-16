@@ -2,11 +2,13 @@ from time import sleep
 from json import dumps
 from kafka import KafkaProducer
 
-producer = KafkaProducer(bootstrap_servers=['localhost:9092'],
-                         value_serializer=lambda x:
-                         dumps(x).encode('utf-8'))
+producer = KafkaProducer(bootstrap_servers='localhost:9092' , api_version=(0, 10, 1))
 
-for i in range(100):
-    data = {'record': i}
-    producer.send('anomaly', value=data)
-    sleep(5)
+for _ in range(25):
+    data = f'Kafka msg: {_}'
+    future = producer.send('anomaly', data.encode('utf-8'))
+    # print(f'Sending msg: {data}')
+    # result = future.get(timeout=60)
+    producer.flush()
+# metrics = producer.metrics()
+# print(metrics)
