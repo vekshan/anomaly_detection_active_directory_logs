@@ -1,9 +1,11 @@
 import json
 from pickle import load
 from kafka import KafkaConsumer
+import numpy as np
+from pickle import load
 
-# clf = load("model.pkl", "rb")
-# scaler = load("scaler.pkl", "rb")
+with open('final_model.sav', 'rb') as f:
+    model = load(f)
 
 
 consumer = KafkaConsumer(
@@ -12,9 +14,13 @@ consumer = KafkaConsumer(
     auto_offset_reset='latest')
 
 for message in consumer:
-    print(message)
-    # message = message.value
-    # record = json.loads(message.value().decode('utf-8'))
-    # data = record["data"]
-    #
-    # print(data)
+    data = np.frombuffer(message.value, dtype=int)
+    time = data[0]
+    total_events = data[2]
+    features = (data[4:]/total_events).reshape(1,-1)
+    print(features)
+    print (model.predict(X)[0])
+    if model.predict(features)[0] == 1:
+        print(f'Anomaly detected at time {str(time)}')
+
+

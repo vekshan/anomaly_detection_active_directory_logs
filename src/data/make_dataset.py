@@ -97,7 +97,7 @@ def process_purplesharp():
     df = df.withColumn("EventTime", convert_to_unix_udf(df.EventTime))
 
     new_columns = ['time', 'host', 'event_id']
-    return df.toDF(*new_columns)
+    return df.toDF(*new_columns) 
 
 
 def main():
