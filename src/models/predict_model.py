@@ -22,9 +22,9 @@ for message in consumer:
     # print(len(data))
     data = np.array(data)
     # # data = np.frombuffer(message.value, dtype=int)
-    time = data[1]  # there seem to be an index at position 0
-    total_events = data[2]  # removed user, else total_events = data[2]
-    features = (data[4:]/total_events).reshape(1, -1)  # removed user else 4:
+    time = data[0]
+    total_events = data[1]  # removed user, else total_events = data[2]
+    features = (data[3:]/total_events).reshape(1, -1)  # removed user else 4:
     # print(features)
     # print(len(features[0]))
     if model.predict(features)[0] == 1:
