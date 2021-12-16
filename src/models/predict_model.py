@@ -18,6 +18,7 @@ for message in consumer:
     data = message.value.decode('utf-8')
     # print(data)
     data = data.split(',')
+    host = data.pop(1)
     data = [float(i) for i in data]
     # print(len(data))
     data = np.array(data)
@@ -28,4 +29,4 @@ for message in consumer:
     # print(features)
     # print(len(features[0]))
     if model.predict(features)[0] == 1:
-        print(f'Anomaly detected at time {str(time)}')
+        print(f'Anomaly detected at time {str(time)} on host {host}')

@@ -6,7 +6,7 @@ import json
 producer = KafkaProducer(
     bootstrap_servers='localhost:9092', api_version=(0, 10, 1))
 
-df = pd.read_csv("../../../data/processed/test_df.csv", engine='python')
+df = pd.read_csv("../../../data/processed/final_df.csv", engine='python')
 
 for _, row in df.iterrows():
     data = row.values.tolist()
